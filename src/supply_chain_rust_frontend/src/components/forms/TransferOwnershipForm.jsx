@@ -1,37 +1,68 @@
-// src/components/forms/TransferOwnershipForm.jsx
 import React, { useState } from 'react';
-import supplyChainActor from '../../utils/icp';
+import { supplyChainActor } from '../../utils/icp';
 
-const TransferOwnershipForm = ({ onSubmit }) => {
-  const [form, setForm] = useState({ id: '', new_owner: '', metadata: '' });
+export default function TransferOwnershipForm() {
+  const [formData, setFormData] = useState({
+    id: '',
+    newOwner: '',
+    metadata: '',
+  });
+
+  const [message, setMessage] = useState('');
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setFormData({...formData, [e.target.name]: e.target.value});
   };
 
-  const submitForm = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(form);
+    const { id, newOwner, metadata } = formData;
+
+    try {
+      const result = await supplyChainActor.transfer_ownership(
+        id,
+        newOwner,
+        metadata ? [metadata] : []
+      );
+
+      if ('Ok' in result) {
+        setMessage('✅ Ownership transferred successfully!');
+      } else {
+        setMessage(`❌ Error: ${result.Err}`);
+      }
+    } catch (err) {
+      setMessage(`❌ Exception: ${err.message}`);
+    }
   };
 
   return (
-    <form className="p-4 bg-light border rounded shadow-sm" onSubmit={submitForm}>
+    <div className="card p-4 mb-4">
       <h4>Transfer Ownership</h4>
-      <div className="mb-3">
-        <label>Product ID</label>
-        <input className="form-control" name="id" onChange={handleChange} required />
-      </div>
-      <div className="mb-3">
-        <label>New Owner</label>
-        <input className="form-control" name="new_owner" onChange={handleChange} required />
-      </div>
-      <div className="mb-3">
-        <label>Metadata (optional)</label>
-        <input className="form-control" name="metadata" onChange={handleChange} />
-      </div>
-      <button className="btn btn-warning">Transfer</button>
-    </form>
+      <form onSubmit={handleSubmit}>
+        <input
+          className="form-control my-2"
+          placeholder="Product ID"
+          name="id"
+          value={formData.id}
+          onChange={handleChange}
+        />
+        <input
+          className="form-control my-2"
+          placeholder="New Owner Principal"
+          name="newOwner"
+          value={formData.newOwner}
+          onChange={handleChange}
+        />
+        <input
+          className="form-control my-2"
+          placeholder="Metadata (optional)"
+          name="metadata"
+          value={formData.metadata}
+          onChange={handleChange}
+        />
+        <button className="btn btn-warning w-100">Transfer</button>
+      </form>
+      <p className="mt-2 text-center">{message}</p>
+    </div>
   );
-};
-
-export default TransferOwnershipForm;
+}

@@ -1,11 +1,8 @@
-
 import React, { useState } from 'react';
-import supplyChainActor from '../../utils/icp';
+import { supplyChainActor } from '../../utils/icp';
 
-const AddProductForm = ({ onSubmit }) => {
-  const [msg, setMsg] = useState('');
-
-  const [form, setForm] = useState({
+export default function AddProductForm() {
+  const [formData, setFormData] = useState({
     id: '',
     name: '',
     origin: '',
@@ -13,39 +10,54 @@ const AddProductForm = ({ onSubmit }) => {
     certifications: '',
   });
 
+  const [message, setMessage] = useState('');
+
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setFormData({...formData, [e.target.name]: e.target.value});
   };
 
-  const submitForm = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const { id, name, origin, description, certifications } = formData;
+
     try {
-      const result =  supplyChainActor.add_product(
-        form.id,
-        form.name,
-        form.origin,
-        form.certifications.split(",").map(c => c.trim()),
-        form.description ? [form.description] : []
+      const certArray = certifications.split(',').map(c => c.trim());
+      const result = await supplyChainActor.add_product(
+        id,
+        name,
+        origin,
+        certArray,
+        description ? [description] : []
       );
-      setMsg("✅ Product added!");
+
+      if ('Ok' in result) {
+        setMessage('✅ Product added successfully!');
+      } else {
+        setMessage(`❌ Error: ${result.Err}`);
+      }
     } catch (err) {
-      setMsg("❌ Error: " + err.message);
+      setMessage(`❌ Exception: ${err.message}`);
     }
   };
-    
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 border rounded bg-light">
-      <h4>Add Product</h4>
-      <input name="id" placeholder="ID" className="form-control mb-2" onChange={handleChange} />
-      <input name="name" placeholder="Name" className="form-control mb-2" onChange={handleChange} />
-      <input name="origin" placeholder="Origin" className="form-control mb-2" onChange={handleChange} />
-      <input name="description" placeholder="Description" className="form-control mb-2" onChange={handleChange} />
-      <input name="certifications" placeholder="Cert1,Cert2" className="form-control mb-2" onChange={handleChange} />
-      <button className="btn btn-primary">Add Product</button>
-      <p className="mt-2">{msg}</p>
-    </form>
+    <div className="card p-4 mb-4">
+      <h4>Add New Product</h4>
+      <form onSubmit={handleSubmit}>
+        {["id", "name", "origin", "description", "certifications"].map((field) => (
+          <input
+            key={field}
+            className="form-control my-2"
+            placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+            name={field}
+            value={formData[field]}
+            onChange={handleChange}
+          />
+        ))}
+        <button className="btn btn-primary w-100">Add Product</button>
+      </form>
+      <p className="mt-2 text-center">{message}</p>
+    </div>
   );
-};
-
-export default AddProductForm;
+}

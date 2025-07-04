@@ -1,27 +1,32 @@
 import React, { useState } from 'react';
-import supplyChainActor from '../../utils/icp';
+import { supplyChainActor } from '../../utils/icp';
 
-const ProductsByOwnerForm = ({ onSubmit }) => {
+export default function ProductsByOwnerForm() {
   const [owner, setOwner] = useState('');
+  const [products, setProducts] = useState([]);
 
-  const submitForm = (e) => {
-    e.preventDefault();
-    onSubmit(owner);
+  const fetchProducts = async () => {
+    try {
+      const list = await supplyChainActor.get_products_by_owner(owner);
+      setProducts(list);
+    } catch (err) {
+      console.error(err);
+      setProducts([]);
+    }
   };
 
   return (
-    <form className="p-4 bg-light border rounded shadow-sm" onSubmit={submitForm}>
-      <h4>Get Products by Owner</h4>
-      <input
-        className="form-control mb-3"
-        placeholder="Enter Owner Principal"
-        value={owner}
-        onChange={(e) => setOwner(e.target.value)}
-        required
-      />
-      <button className="btn btn-primary">Fetch</button>
-    </form>
+    <div className="card p-4 mb-4">
+      <h4>Products Owned</h4>
+      <input className="form-control my-2" placeholder="Owner Principal" value={owner} onChange={e => setOwner(e.target.value)} />
+      <button className="btn btn-outline-primary w-100 mb-2" onClick={fetchProducts}>Get Products</button>
+      <ul className="list-group">
+        {products.map((p, idx) => (
+          <li key={idx} className="list-group-item">
+            <strong>{p.name}</strong> (ID: {p.id}) – From: {p.origin}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
-};
-
-export default ProductsByOwnerForm;
+}

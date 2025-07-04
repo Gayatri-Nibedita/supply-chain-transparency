@@ -1,12 +1,8 @@
 import { HttpAgent, Actor } from '@dfinity/agent';
-import { idlFactory } from "../../../declarations/supply_chain_rust_backend/supply_chain_rust_backend.did.js";
-
-const canisterId = u6s2n-gx777-77774-qaaba-cai; 
+import { idlFactory as supply_chain_idl, canisterId as supply_chain_id } from '../../../declarations/supply_chain_rust_backend';
 
 const agent = new HttpAgent();
-const supplyChainActor = Actor.createActor(idlFactory, {
+export const supplyChainActor = Actor.createActor(supply_chain_idl, {
   agent,
-  canisterId,
+  canisterId: supply_chain_id,
 });
-
-export default supplyChainActor;

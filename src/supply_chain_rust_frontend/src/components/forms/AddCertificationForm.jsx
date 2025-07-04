@@ -1,33 +1,34 @@
-// src/components/forms/AddCertificationForm.jsx
 import React, { useState } from 'react';
-import supplyChainActor from '../../utils/icp';
+import { supplyChainActor } from '../../utils/icp';
 
-const AddCertificationForm = ({ onSubmit }) => {
-  const [form, setForm] = useState({ id: '', certification: '' });
+export default function AddCertificationForm() {
+  const [id, setId] = useState('');
+  const [certification, setCertification] = useState('');
+  const [message, setMessage] = useState('');
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const submitForm = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(form);
+    try {
+      const result = await supplyChainActor.add_certification(id, certification);
+      if ('Ok' in result) {
+        setMessage('✅ Certification added successfully!');
+      } else {
+        setMessage(`❌ Error: ${result.Err}`);
+      }
+    } catch (err) {
+      setMessage(`❌ Exception: ${err.message}`);
+    }
   };
 
   return (
-    <form className="p-4 bg-light border rounded shadow-sm" onSubmit={submitForm}>
+    <div className="card p-4 mb-4">
       <h4>Add Certification</h4>
-      <div className="mb-3">
-        <label>Product ID</label>
-        <input className="form-control" name="id" onChange={handleChange} required />
-      </div>
-      <div className="mb-3">
-        <label>Certification</label>
-        <input className="form-control" name="certification" onChange={handleChange} required />
-      </div>
-      <button className="btn btn-info text-white">Add</button>
-    </form>
+      <form onSubmit={handleSubmit}>
+        <input className="form-control my-2" placeholder="Product ID" value={id} onChange={e => setId(e.target.value)} />
+        <input className="form-control my-2" placeholder="Certification" value={certification} onChange={e => setCertification(e.target.value)} />
+        <button className="btn btn-info w-100">Add</button>
+      </form>
+      <p className="mt-2 text-center">{message}</p>
+    </div>
   );
-};
-
-export default AddCertificationForm;
+}

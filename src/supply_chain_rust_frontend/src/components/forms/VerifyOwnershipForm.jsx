@@ -1,32 +1,31 @@
 import React, { useState } from 'react';
-import supplyChainActor from '../../utils/icp';
+import { supplyChainActor } from '../../utils/icp';
 
-const VerifyOwnershipForm = ({ onSubmit }) => {
-  const [form, setForm] = useState({ id: '', owner: '' });
+export default function VerifyOwnershipForm() {
+  const [id, setId] = useState('');
+  const [owner, setOwner] = useState('');
+  const [result, setResult] = useState('');
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const submitForm = (e) => {
-    e.preventDefault();
-    onSubmit(form);
+  const verify = async () => {
+    try {
+      const res = await supplyChainActor.verify_ownership(id, owner);
+      if ('Ok' in res) {
+        setResult(res.Ok ? '✅ Owner verified' : '❌ Not the owner');
+      } else {
+        setResult(`❌ Error: ${res.Err}`);
+      }
+    } catch (err) {
+      setResult(`❌ Exception: ${err.message}`);
+    }
   };
 
   return (
-    <form className="p-4 bg-light border rounded shadow-sm" onSubmit={submitForm}>
+    <div className="card p-4 mb-4">
       <h4>Verify Ownership</h4>
-      <div className="mb-3">
-        <label>Product ID</label>
-        <input className="form-control" name="id" onChange={handleChange} required />
-      </div>
-      <div className="mb-3">
-        <label>Owner</label>
-        <input className="form-control" name="owner" onChange={handleChange} required />
-      </div>
-      <button className="btn btn-secondary">Verify</button>
-    </form>
+      <input className="form-control my-2" placeholder="Product ID" value={id} onChange={e => setId(e.target.value)} />
+      <input className="form-control my-2" placeholder="Owner Principal" value={owner} onChange={e => setOwner(e.target.value)} />
+      <button className="btn btn-outline-success w-100 mb-2" onClick={verify}>Verify</button>
+      <p className="text-center">{result}</p>
+    </div>
   );
-};
-
-export default VerifyOwnershipForm;
+}

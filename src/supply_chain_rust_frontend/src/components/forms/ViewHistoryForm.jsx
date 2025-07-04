@@ -1,27 +1,41 @@
 import React, { useState } from 'react';
-import supplyChainActor from '../../utils/icp';
+import { supplyChainActor } from '../../utils/icp';
 
-const ViewHistoryForm = ({ onSubmit }) => {
+export default function ViewHistoryForm() {
   const [id, setId] = useState('');
+  const [history, setHistory] = useState([]);
+  const [error, setError] = useState('');
 
-  const submitForm = (e) => {
-    e.preventDefault();
-    onSubmit(id);
+  const fetchHistory = async () => {
+    try {
+      const result = await supplyChainActor.get_product_history(id);
+      if ('Ok' in result) {
+        setHistory(result.Ok);
+        setError('');
+      } else {
+        setError(result.Err);
+        setHistory([]);
+      }
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (
-    <form className="p-4 bg-light border rounded shadow-sm" onSubmit={submitForm}>
-      <h4>View Product History</h4>
-      <input
-        className="form-control mb-3"
-        placeholder="Enter Product ID"
-        value={id}
-        onChange={(e) => setId(e.target.value)}
-        required
-      />
-      <button className="btn btn-dark">Get History</button>
-    </form>
+    <div className="card p-4 mb-4">
+      <h4>Product History</h4>
+      <input className="form-control my-2" placeholder="Product ID" value={id} onChange={e => setId(e.target.value)} />
+      <button className="btn btn-secondary w-100 mb-2" onClick={fetchHistory}>Get History</button>
+      {error && <p className="text-danger text-center">{error}</p>}
+      <ul className="list-group">
+        {history.map((tx, idx) => (
+          <li key={idx} className="list-group-item">
+            <strong>{new Date(Number(tx.timestamp) / 1_000_000).toLocaleString()}</strong>:  
+            {` ${tx.from} ➡️ ${tx.to}`}
+            {tx.metadata && <div><em>Note:</em> {tx.metadata}</div>}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
-};
-
-export default ViewHistoryForm;
+}
